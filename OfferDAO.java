@@ -37,20 +37,27 @@ public class OfferDAO {
     }
 
     public Offer getOfferById(int id) {
-        String sql = "SELECT * FROM Offers WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return new Offer(rs.getInt("id"), rs.getInt("houseId"), rs.getInt("customerId"), rs.getDouble("offerPrice"), rs.getString("status"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+    String sql = "SELECT * FROM Offers WHERE id = ?";
+    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        pstmt.setInt(1, id);
+        ResultSet rs = pstmt.executeQuery();
+        if (rs.next()) {
+            return new Offer(
+                rs.getInt("id"),
+                rs.getInt("houseId"),
+                rs.getInt("customerId"),
+                rs.getDouble("offerPrice"),
+                rs.getString("status"),
+                getOwnerIdByHouseId(rs.getInt("houseId")) // Retrieve ownerId using houseId
+            );
         }
-        return null;
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
+    return null;
+}
 
-    public List<Offer> getOffersByOwnerId(int ownerId) {
+public List<Offer> getOffersByOwnerId(int ownerId) {
     List<Offer> offers = new ArrayList<>();
     String sql = "SELECT o.* FROM Offers o JOIN Houses h ON o.houseId = h.id WHERE h.ownerId = ?";
     try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -62,12 +69,60 @@ public class OfferDAO {
                 rs.getInt("houseId"),
                 rs.getInt("customerId"),
                 rs.getDouble("offerPrice"),
-                rs.getString("status")
+                rs.getString("status"),
+                getOwnerIdByHouseId(rs.getInt("houseId")) // Retrieve ownerId using houseId
             ));
         }
     } catch (SQLException e) {
         e.printStackTrace();
     }
-    return offers;  // Ensure this returns the list
+    return offers;  
 }
+
+public List<Offer> getOffersByCustomerId(int customerId) {
+    List<Offer> offers = new ArrayList<>();
+    String sql = "SELECT * FROM Offers WHERE customerId = ?";
+    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        pstmt.setInt(1, customerId);
+        ResultSet rs = pstmt.executeQuery();
+        while (rs.next()) {
+            offers.add(new Offer(
+                rs.getInt("id"),
+                rs.getInt("houseId"),
+                rs.getInt("customerId"),
+                rs.getDouble("offerPrice"),
+                rs.getString("status"),
+                getOwnerIdByHouseId(rs.getInt("houseId")) // Retrieve ownerId using houseId
+            ));
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return offers;
+}
+    
+    public int getOwnerIdByHouseId(int houseId) {
+        String sql = "SELECT ownerId FROM Houses WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, houseId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("ownerId");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1; // or throw an exception if not found
+    }
+    
+    public void updateOfferStatus(int offerId, String status) {
+        String sql = "UPDATE Offers SET status = ? WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, status);
+            pstmt.setInt(2, offerId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
