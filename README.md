@@ -11,7 +11,7 @@ MySQL server set up with a database named bas.
 JDBC driver for MySQL added to your project's classpath.
 
 Database Setup:
-First Create a Database Called "Bas"
+First Create a Database Called "Bas (1)"
 then import the bas.sql into the database
 
 Running the Application:
