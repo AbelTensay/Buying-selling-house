@@ -1,6 +1,8 @@
 package buyingandselling;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDAO {
     private static UserDAO instance;
@@ -21,12 +23,20 @@ public class UserDAO {
         return instance;
     }
 
-    public void addUser(User user) {
-        String sql = "INSERT INTO Users (username, password, role) VALUES (?, ?, ?)";
+    public void registerUser(User user) {
+        String sql = "INSERT INTO Users (username, password, role, Phone) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, user.getUsername());
             pstmt.setString(2, user.getPassword());
             pstmt.setString(3, user.getRole());
+            
+            // Set phone number based on user type
+            if (user instanceof Owner) {
+                pstmt.setString(4, ((Owner) user).getPhoneNumber());
+            } else if (user instanceof Customer) {
+                pstmt.setString(4, ((Customer) user).getPhoneNumber());
+            }
+
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -40,14 +50,59 @@ public class UserDAO {
             pstmt.setString(2, password);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                String role = rs.getString("role");
                 int id = rs.getInt("id");
-                return new User(id, username, password, role);
+                String role = rs.getString("role");
+                return createUserFromResultSet(rs); // Use createUserFromResultSet for proper object creation
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
+    }
+    
+    private User createUserFromResultSet(ResultSet rs) throws SQLException {
+        int id = rs.getInt("id");
+        String username = rs.getString("username");
+        String password = rs.getString("password");
+        String role = rs.getString("role");
+
+        switch (role) {
+            case "Admin":
+                return new Admin(id, username, password);
+            case "Owner":
+                String phoneNumber = rs.getString("Phone");
+                return new Owner(id, username, password, phoneNumber);
+            case "Customer":
+                phoneNumber = rs.getString("Phone");
+                return new Customer(id, username, password, phoneNumber);
+            default:
+                return null; // Or throw an exception for unknown role
+        }
+    }
+
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM Users";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                User user = createUserFromResultSet(rs);
+                users.add(user);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    public void deleteUser(int userId) {
+        String sql = "DELETE FROM Users WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, userId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public User getUserById(int id) {
@@ -56,14 +111,51 @@ public class UserDAO {
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                String username = rs.getString("username");
-                String password = rs.getString("password");
-                String role = rs.getString("role");
-                return new User(id, username, password, role);
+                return createUserFromResultSet(rs); // Use createUserFromResultSet for proper object creation
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    // Method to get an Owner by their ID
+    public Owner getOwnerById(int id) {
+        String sql = "SELECT * FROM Users WHERE id = ? AND role = 'Owner'";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return new Owner(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("password"),
+                    rs.getString("Phone")
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // Return null if no owner is found
+    }
+
+    // Method to get a Customer by their ID
+    public Customer getCustomerById(int id) {
+        String sql = "SELECT * FROM Users WHERE id = ? AND role = 'Customer'";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return new Customer(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("password"),
+                    rs.getString("Phone")
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // Return null if no customer is found
     }
 }
