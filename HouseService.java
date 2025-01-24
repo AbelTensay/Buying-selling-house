@@ -11,10 +11,14 @@ public class HouseService {
     }
 
     public House getHouse(int id) {
-        return houseDAO.getHouseById(id);
+        return houseDAO.getHouseById(id); // Retrieve house by ID
     }
 
     public List<House> getAvailableHouses() {
-        return houseDAO.getAvailableHouses();
+        return houseDAO.getAvailableHouses(); // Retrieve all available houses
+    }
+
+    public void deleteHouse(int houseId) {
+        houseDAO.deleteHouse(houseId); // Call delete method in HouseDAO
     }
 }
