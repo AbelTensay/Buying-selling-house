@@ -71,4 +71,19 @@ public class HouseDAO {
         }
         return houses;
     }
+
+    public void deleteHouse(int houseId) {
+        String sql = "DELETE FROM Houses WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, houseId);
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("House deleted successfully.");
+            } else {
+                System.out.println("No house found with ID: " + houseId);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
