@@ -6,14 +6,14 @@
 package buyingandselling;
 
 public class UserFactory {
-    public static User createUser(String type, int id, String username, String password) {
+    public static User createUser(String type, int id, String username, String password, String phoneNumber) {
         switch (type) {
             case "Customer":
-                return new Customer(id, username, password);
+                return new Customer(id, username, password, phoneNumber); // Pass phone number
             case "Owner":
-                return new Owner(id, username, password);
+                return new Owner(id, username, password); // Assuming Owner does not need a phone number here
             case "Admin":
-                return new Admin(id, username, password);
+                return new Admin(id, username, password); // Assuming Admin does not need a phone number
             default:
                 throw new IllegalArgumentException("Unknown user type");
         }
